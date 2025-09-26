@@ -9,7 +9,8 @@ Working camera controls for the Opal C1 webcam on Linux using the depthai framew
 ✅ **Manual Focus Control** - Disable auto focus for stable video calls  
 ✅ **Cross-Application** - Settings persist across Zoom, Teams, OBS, etc.  
 ✅ **Simple CLI** - Easy command-line interface  
-🚧 **GUI Controls** - Coming soon  
+✅ **GUI Interface** - User-friendly graphical controls  
+🚧 **Advanced Controls** - Exposure and white balance coming soon  
 
 ## Quick Start
 
@@ -30,7 +31,12 @@ pip install -r requirements.txt
 
 ### Usage
 
-**Disable Auto Focus (for video calls):**
+**GUI Interface (Recommended):**
+```bash
+python opal_gui.py
+```
+
+**Disable Auto Focus (CLI):**
 ```bash
 python set_manual_focus.py
 ```
