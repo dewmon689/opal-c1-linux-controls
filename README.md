@@ -1,6 +1,8 @@
-# Opal C1 Controls
+# Opal C1 Linux Controls
 
 Working camera controls for the Opal C1 webcam on Linux using the depthai framework.
+
+> **Note**: This project is specifically for Linux. The Opal C1 works differently on Windows/macOS.
 
 ## Features
 
@@ -15,8 +17,8 @@ Working camera controls for the Opal C1 webcam on Linux using the depthai framew
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/opal-c1-controls
-cd opal-c1-controls
+git clone https://github.com/yourusername/opal-c1-linux-controls
+cd opal-c1-linux-controls
 
 # Create virtual environment
 python3 -m venv venv
@@ -51,11 +53,20 @@ This project provides a working solution for Linux users who want professional c
 
 ## Requirements
 
-- Linux (tested on Ubuntu)
+- **Linux** (tested on Ubuntu 24.04)
 - Python 3.8+
 - Opal C1 camera connected via USB
 - depthai framework
 - OpenCV
+
+## Platform Notes
+
+This solution is Linux-specific because:
+- Uses V4L2/UVC interface for video streaming
+- Requires depthai framework for camera controls
+- Linux-specific USB device handling
+
+For Windows users, the official Opal software may provide similar controls.
 
 ## Contributing
 
