@@ -210,21 +210,27 @@ class OpalGUI:
         threading.Thread(target=apply_in_thread, daemon=True).start()
         
     def test_camera(self):
-        """Launch camera test"""
+        """Launch focus test"""
         import subprocess
         import os
         
         try:
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            test_script = os.path.join(script_dir, "test_camera.py")
+            test_script = os.path.join(script_dir, "focus_test.py")
             
             if os.path.exists(test_script):
                 subprocess.Popen(["python3", test_script])
-                self.status_var.set("Camera test launched")
+                self.status_var.set("Focus test launched - Watch for sharpness changes")
             else:
-                messagebox.showwarning("Warning", "test_camera.py not found")
+                # Fallback to original test
+                test_script = os.path.join(script_dir, "test_camera.py")
+                if os.path.exists(test_script):
+                    subprocess.Popen(["python3", test_script])
+                    self.status_var.set("Camera test launched")
+                else:
+                    messagebox.showwarning("Warning", "Test scripts not found")
         except Exception as e:
-            messagebox.showerror("Error", f"Could not launch camera test: {e}")
+            messagebox.showerror("Error", f"Could not launch test: {e}")
 
 def main():
     root = tk.Tk()
