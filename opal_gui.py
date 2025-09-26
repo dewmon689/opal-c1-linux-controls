@@ -37,13 +37,16 @@ class OpalGUI:
         focus_frame = ttk.LabelFrame(main_frame, text="Focus Control", padding="10")
         focus_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
         
-        # Auto focus toggle
+        # Auto focus toggle - clearer ON/OFF switch
+        toggle_frame = ttk.Frame(focus_frame)
+        toggle_frame.grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 10))
+        
+        ttk.Label(toggle_frame, text="Auto Focus:").pack(side=tk.LEFT)
+        
         self.auto_focus_var = tk.BooleanVar(value=True)
-        auto_focus_check = ttk.Checkbutton(focus_frame, text="✓ Auto Focus Enabled", 
-                                          variable=self.auto_focus_var,
-                                          command=self.toggle_auto_focus)
-        auto_focus_check.grid(row=0, column=0, columnspan=2, sticky=tk.W)
-        self.auto_focus_check = auto_focus_check
+        self.toggle_button = ttk.Button(toggle_frame, text="ON", width=6,
+                                       command=self.toggle_auto_focus)
+        self.toggle_button.pack(side=tk.LEFT, padx=(10, 0))
         
         # Manual focus slider
         ttk.Label(focus_frame, text="Manual Focus:").grid(row=1, column=0, sticky=tk.W, pady=(10, 0))
@@ -85,21 +88,18 @@ class OpalGUI:
         
     def toggle_auto_focus(self):
         """Toggle between auto and manual focus"""
-        auto_enabled = self.auto_focus_var.get()
+        # Toggle the state
+        self.auto_focus_enabled = not self.auto_focus_enabled
         
-        if auto_enabled:
+        if self.auto_focus_enabled:
             self.focus_scale.configure(state="disabled")
-            self.auto_focus_check.configure(text="✓ Auto Focus Enabled")
-        else:
-            self.focus_scale.configure(state="normal")
-            self.auto_focus_check.configure(text="✗ Manual Focus")
-            
-        self.auto_focus_enabled = auto_enabled
-        
-        # Apply the change immediately
-        if auto_enabled:
+            self.toggle_button.configure(text="ON")
+            self.status_var.set("Auto focus enabled")
             self.apply_auto_focus()
         else:
+            self.focus_scale.configure(state="normal")
+            self.toggle_button.configure(text="OFF")
+            self.status_var.set("Manual focus enabled")
             self.apply_focus_only(self.current_focus)
             
     def on_focus_drag(self, event):
@@ -157,6 +157,8 @@ class OpalGUI:
         """Apply just focus setting quickly"""
         def apply_in_thread():
             try:
+                self.status_var.set(f"Setting focus to {focus_value}...")
+                
                 pipeline = dai.Pipeline()
                 cam = pipeline.create(dai.node.ColorCamera)
                 control_in = pipeline.create(dai.node.XLinkIn)
@@ -170,9 +172,12 @@ class OpalGUI:
                     ctrl = dai.CameraControl()
                     ctrl.setManualFocus(focus_value)
                     q_ctrl.send(ctrl)
+                    time.sleep(0.2)
                     
-            except Exception:
-                pass  # Fail silently for real-time updates
+                self.status_var.set(f"✓ Manual focus: {focus_value}")
+                    
+            except Exception as e:
+                self.status_var.set(f"✗ Error: {str(e)[:30]}")
                 
         threading.Thread(target=apply_in_thread, daemon=True).start()
         
@@ -180,6 +185,8 @@ class OpalGUI:
         """Apply auto focus setting"""
         def apply_in_thread():
             try:
+                self.status_var.set("Enabling auto focus...")
+                
                 pipeline = dai.Pipeline()
                 cam = pipeline.create(dai.node.ColorCamera)
                 control_in = pipeline.create(dai.node.XLinkIn)
@@ -193,9 +200,12 @@ class OpalGUI:
                     ctrl = dai.CameraControl()
                     ctrl.setAutoFocusMode(dai.CameraControl.AutoFocusMode.AUTO)
                     q_ctrl.send(ctrl)
+                    time.sleep(0.2)
                     
-            except Exception:
-                pass
+                self.status_var.set("✓ Auto focus enabled")
+                    
+            except Exception as e:
+                self.status_var.set(f"✗ Error: {str(e)[:30]}")
                 
         threading.Thread(target=apply_in_thread, daemon=True).start()
         
