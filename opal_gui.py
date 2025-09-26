@@ -90,11 +90,21 @@ class OpalGUI:
             
         self.auto_focus_enabled = auto_enabled
         
+        # Apply the change immediately
+        if auto_enabled:
+            self.apply_auto_focus()
+        else:
+            self.apply_focus_only(self.current_focus)
+        
     def on_focus_change(self, value):
-        """Update focus value display"""
+        """Update focus value and apply immediately if manual mode"""
         focus_val = int(float(value))
         self.focus_value_label.config(text=str(focus_val))
         self.current_focus = focus_val
+        
+        # Apply immediately if in manual mode
+        if not self.auto_focus_enabled:
+            self.apply_focus_only(focus_val)
         
     def apply_settings(self):
         """Apply camera settings"""
@@ -130,6 +140,52 @@ class OpalGUI:
                 self.status_var.set(f"✗ Error: {str(e)}")
                 
         # Run in separate thread to avoid blocking UI
+        threading.Thread(target=apply_in_thread, daemon=True).start()
+        
+    def apply_focus_only(self, focus_value):
+        """Apply just focus setting quickly"""
+        def apply_in_thread():
+            try:
+                pipeline = dai.Pipeline()
+                cam = pipeline.create(dai.node.ColorCamera)
+                control_in = pipeline.create(dai.node.XLinkIn)
+                
+                control_in.setStreamName("control")
+                cam.setBoardSocket(dai.CameraBoardSocket.CAM_A)
+                control_in.out.link(cam.inputControl)
+                
+                with dai.Device(pipeline) as device:
+                    q_ctrl = device.getInputQueue("control")
+                    ctrl = dai.CameraControl()
+                    ctrl.setManualFocus(focus_value)
+                    q_ctrl.send(ctrl)
+                    
+            except Exception:
+                pass  # Fail silently for real-time updates
+                
+        threading.Thread(target=apply_in_thread, daemon=True).start()
+        
+    def apply_auto_focus(self):
+        """Apply auto focus setting"""
+        def apply_in_thread():
+            try:
+                pipeline = dai.Pipeline()
+                cam = pipeline.create(dai.node.ColorCamera)
+                control_in = pipeline.create(dai.node.XLinkIn)
+                
+                control_in.setStreamName("control")
+                cam.setBoardSocket(dai.CameraBoardSocket.CAM_A)
+                control_in.out.link(cam.inputControl)
+                
+                with dai.Device(pipeline) as device:
+                    q_ctrl = device.getInputQueue("control")
+                    ctrl = dai.CameraControl()
+                    ctrl.setAutoFocusMode(dai.CameraControl.AutoFocusMode.AUTO)
+                    q_ctrl.send(ctrl)
+                    
+            except Exception:
+                pass
+                
         threading.Thread(target=apply_in_thread, daemon=True).start()
         
     def test_camera(self):
