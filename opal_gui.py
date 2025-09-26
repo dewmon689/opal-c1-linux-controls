@@ -39,19 +39,23 @@ class OpalGUI:
         
         # Auto focus toggle
         self.auto_focus_var = tk.BooleanVar(value=True)
-        auto_focus_check = ttk.Checkbutton(focus_frame, text="Auto Focus", 
+        auto_focus_check = ttk.Checkbutton(focus_frame, text="✓ Auto Focus Enabled", 
                                           variable=self.auto_focus_var,
                                           command=self.toggle_auto_focus)
         auto_focus_check.grid(row=0, column=0, columnspan=2, sticky=tk.W)
+        self.auto_focus_check = auto_focus_check
         
         # Manual focus slider
         ttk.Label(focus_frame, text="Manual Focus:").grid(row=1, column=0, sticky=tk.W, pady=(10, 0))
         
         self.focus_var = tk.IntVar(value=130)
         self.focus_scale = ttk.Scale(focus_frame, from_=0, to=255, 
-                                    variable=self.focus_var, orient=tk.HORIZONTAL,
-                                    command=self.on_focus_change)
+                                    variable=self.focus_var, orient=tk.HORIZONTAL)
         self.focus_scale.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(5, 0))
+        
+        # Bind the scale change event properly
+        self.focus_scale.bind("<Motion>", self.on_focus_drag)
+        self.focus_scale.bind("<ButtonRelease-1>", self.on_focus_release)
         
         self.focus_value_label = ttk.Label(focus_frame, text="130")
         self.focus_value_label.grid(row=2, column=1, padx=(10, 0))
@@ -85,8 +89,10 @@ class OpalGUI:
         
         if auto_enabled:
             self.focus_scale.configure(state="disabled")
+            self.auto_focus_check.configure(text="✓ Auto Focus Enabled")
         else:
             self.focus_scale.configure(state="normal")
+            self.auto_focus_check.configure(text="✗ Manual Focus")
             
         self.auto_focus_enabled = auto_enabled
         
@@ -95,15 +101,20 @@ class OpalGUI:
             self.apply_auto_focus()
         else:
             self.apply_focus_only(self.current_focus)
-        
-    def on_focus_change(self, value):
-        """Update focus value and apply immediately if manual mode"""
-        focus_val = int(float(value))
-        self.focus_value_label.config(text=str(focus_val))
-        self.current_focus = focus_val
-        
-        # Apply immediately if in manual mode
+            
+    def on_focus_drag(self, event):
+        """Update display while dragging"""
         if not self.auto_focus_enabled:
+            focus_val = int(self.focus_scale.get())
+            self.focus_value_label.config(text=str(focus_val))
+            self.current_focus = focus_val
+            
+    def on_focus_release(self, event):
+        """Apply focus when slider is released"""
+        if not self.auto_focus_enabled:
+            focus_val = int(self.focus_scale.get())
+            self.focus_value_label.config(text=str(focus_val))
+            self.current_focus = focus_val
             self.apply_focus_only(focus_val)
         
     def apply_settings(self):
